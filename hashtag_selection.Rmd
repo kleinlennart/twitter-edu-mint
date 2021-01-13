@@ -1,0 +1,218 @@
+---
+title: "Hashtag Selection"
+author: "Lennart Klein, Conrad Borchers"
+date: "`r format(Sys.time(), '%d. %B, %Y')`"
+output:
+  html_document:
+    toc: true
+    # toc_float: true
+    highlight: "tango"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(kableExtra)
+```
+
+## Load Data
+```{r load data}
+dat <- readRDS("/Volumes/HiWi_Data/DATA/matched_hashtags_data.rds")
+```
+
+## Extract Hashtags
+```{r}
+# Twitter Hashtag-Rules: only letters, numbers, and underscores (_), no special characters.
+dat <- dat %>%
+  mutate(
+    hashtags = text %>% tolower() %>% str_extract_all("#[[:alnum:]_]+")
+  )
+
+dat1 <- dat %>% 
+  rowwise() %>% 
+  mutate(has_twlz_new = str_detect(hashtags, regex("twlz|twitterlehrerzimmer|tlz|twitterlz|twlzbln|mathetwitterlehrqerzimmer|fachdidaktiktwitterlehrerzimmer|twitterkollegium|lehrerzimmer", ignore_case = TRUE))
+  ) %>% ungroup()
+
+
+
+```
+
+## Hashtag Frequency Lists
+```{r}
+hashtags <- dat %>%
+  pull(hashtags) %>%
+  unlist() %>%
+  table() %>%
+  as.data.frame() %>%
+  setNames(c("hashtag", "freq")) %>%
+  arrange(desc(freq))
+hashtags %>% View()
+
+hashtags_twlz <- dat %>%
+  filter(as.logical(has_twlz)) %>% ## FIXME
+  pull(hashtags) %>%
+  unlist() %>%
+  table() %>%
+  as.data.frame() %>%
+  setNames(c("hashtag", "freq")) %>%
+  arrange(desc(freq))
+
+
+hashtags_twlz %>% filter(freq < 10) %>% nrow()
+```
+
+## Export Hashtag Tables
+```{r}
+# from current complete dataset
+hashtags %>%
+  filter(str_detect(hashtag, regex("physik|physics", ignore_case = TRUE))) %>%
+  write_csv("/Volumes/HiWi_Data/OUTPUTS/all_physik.csv")
+hashtags %>%
+  filter(str_detect(hashtag, regex("mathe|maths", ignore_case = TRUE))) %>%
+  write_csv("/Volumes/HiWi_Data/OUTPUTS/all_mathe.csv")
+
+# TODO: Update mit neuer Pipeline
+hashtags_twlz %>%
+  filter(str_detect(hashtag, regex("physik|physics", ignore_case = TRUE))) %>%
+  write_csv("/Volumes/HiWi_Data/OUTPUTS/twlz_physik.csv")
+hashtags_twlz %>%
+  filter(str_detect(hashtag, regex("mathe|maths", ignore_case = TRUE))) %>%
+  write_csv("/Volumes/HiWi_Data/OUTPUTS/twlz_mathe.csv")
+
+hashtags_twlz %>%
+  filter(!str_detect(hashtag, "[^[:ascii:]äÄüÜöÖß]")) %>% 
+  filter(freq > 0) %>%
+  write_csv("/Volumes/HiWi_Data/OUTPUTS/twlz_all_hashtags.csv")
+
+hashtags_twlz %>%
+  filter(!str_detect(hashtag, "[^[:ascii:]äÄüÜöÖß]")) %>% 
+  filter(freq > 10) %>% 
+  write_csv("/Volumes/HiWi_Data/OUTPUTS/twlz_hashtags.csv")
+
+
+
+```
+-> https://docs.google.com/spreadsheets/d/1a3WaiqeR3mxRBwxegV4Ks1wD1IzwDPJ3iuxcnMa8dAI/edit#gid=0
+
+
+
+# Mathe / Physik Subset
+## Auswahlmöglichkeiten
+- Faktor A: Twlz / kompletter Datensatz
+- Faktor B: Hashtag Auswahl / Hashtag Keyword / Tweet Keywords
+
+-> Viele Retweets (ca. 50 %)
+
+++ Keywords in description (Bio)
+
+```{r}
+# nur nach einer Vorauswahl an Hashtags (has_mathe / has_physik)
+dat %>%
+  filter(!is_retweet) %>%
+  filter(has_mathe == 1 | has_physik == 1) %>%
+  select(hashtags, has_mathe, has_physik) %>%
+  nrow()
+# [1] 4793
+
+# nach Keywords in Hashtags
+dat %>%
+  filter(!is_retweet) %>%
+  filter(str_detect(hashtags, regex("physik|physics|mathe|maths", ignore_case = TRUE))) %>%
+  nrow()
+# [1] 6187
+
+# nach Keywords im Text
+dat %>%
+  filter(!is_retweet) %>%
+  filter(str_detect(text_clean, regex("physik|physics|mathe|maths", ignore_case = TRUE))) %>%
+  nrow()
+# [1] 8658
+
+#### Mit TWLZ ####
+# nur nach einer Vorauswahl an Hashtags (has_mathe / has_physik)
+dat %>%
+  filter(!is_retweet) %>%
+  filter(has_twlz == 1) %>%
+  filter(has_mathe == 1 | has_physik == 1) %>%
+  select(hashtags, has_mathe, has_physik) %>%
+  nrow()
+# 459
+
+# nach Keywords in Hashtags
+dat %>%
+  filter(!is_retweet) %>%
+  filter(has_twlz == 1) %>%
+  filter(str_detect(hashtags, regex("physik|physics|mathe|maths", ignore_case = TRUE))) %>%
+  nrow()
+# 1242
+
+# nach Keywords im Text
+dat %>%
+  filter(!is_retweet) %>%
+  filter(has_twlz == 1) %>%
+  filter(str_detect(text_clean, regex("physik|physics|mathe|maths", ignore_case = TRUE))) %>%
+  nrow()
+# 2197
+```
+
+## Preview
+```{r}
+dat %>%
+  filter(!is_retweet) %>%
+  filter(str_detect(text_clean, regex("pythagoras", ignore_case = TRUE))) %>%
+  select(text, hashtags, media_url) %>%
+  View.tweets()
+```
+
+
+
+## Subsetting
+```{r}
+subset <- dat %>%
+  filter(!is_retweet) %>%
+  filter(str_detect(text_clean, regex("physik|physics|mathe|maths", ignore_case = TRUE)))
+```
+
+## Anreichern durch Description
+```{r}
+mint_user_tweets <- dat %>%
+  filter(str_detect(description, regex("physik|physics|mathe|maths", ignore_case = TRUE)))
+
+# Tweets insgesamt 30.624 von
+mint_user %>% nrow()
+
+
+rbind(mint_user, subset) %>%
+  distinct(status_id) %>%
+  nrow()
+```
+
+
+## Descriptives
+```{r}
+subset %>%
+  # filter(!is_retweet) %>% # Nur Originale tweets
+  summarise(
+    N = n(),
+    N_users = length(unique(user_id)),
+    Physik = sum(has_physik),
+    Mathe = sum(has_mathe),
+    rt_M = mean(retweet_count)
+  )
+```
+
+
+## Co-existence report
+```{r}
+# Tweets in beiden Fächer Hashtags
+dat %>%
+  filter(has_mathe == 1 & has_physik == 1) %>%
+  select(hashtags, has_mathe, has_physik) %>%
+  View()
+```
+
+
+## Hashtag Verteilung
+```{r}
+plot(hashtags_twlz$freq[hashtags_twlz$freq > 100], type = "l", main = "Distribution of #twitterlehrerzimmer hashtag occurrences \n Oder: Die endlose Irrelevanz der meisten Hashtags", ylab = "# of tweets in hashtag")
+```

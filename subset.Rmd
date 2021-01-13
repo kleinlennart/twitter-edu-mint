@@ -1,0 +1,99 @@
+---
+title: 'Subset Building'
+output: html_document
+---
+
+```{r}
+library(tidyverse)
+library(kableExtra)
+```
+
+## Read in Complete Dataset
+```{r}
+dat <- readRDS("../DATA/TWITTER_DEUTSCHLAND_NOV_2020_FINAL.rds")
+nrow(dat)
+```
+
+```{r}
+results <- list()
+```
+
+## 1. User Keyword-based Method
+```{r}
+results <- dat %>% 
+  filter(!is_retweet) %>% 
+  filter(str_detect(description, regex("mathe|maths|physik|physics", ignore_case = TRUE))) 
+
+results %>% select(text, description) %>% View()
+```
+
+```{r}
+# Tweets not identified yet
+rest <- anti_join(dat, results, by = "status_id")
+```
+
+### Mathematik
+* #matheunterricht
+* #mathematikunterricht
+* #flippedmathe
+* #mathelehrer
+* #matheunterricht
+* #letsrockmathe
+* #mathelehrerinnen
+* #matheabitur
+* #mathelehrkräfte
+* #mathematiklehrer
+* #matheabi
+* #mathematiklehrkräfte
+* #mathenachhilfe
+* #mathedidaktik
+* #mathegym
+* #mathematikdidaktik
+* #mathematikförderwahn
+* #matheabiturprüfung
+* #mathebydanieljung
+* #mathematikuntericht
+* #mathelehren
+* #mathematikdidaktikerinnen
+* #mathematiklehrerin
+* #mathelehrerin
+* #pflichtfachmathe
+* #pflichtfachmathematik
+* #mathematiklehrerinnen
+* #mathematiklehren
+* #mathematiklehrkräften
+* #mathetwitterlehrerzimmer
+* #schulfachmathematik
+
+### Physik
+
+* #physikunterricht
+* #leifiphysik
+* #physiklehrer
+* #physikdidaktik
+* #physiklehrerinnen
+* #pflichtfachphysik
+* #physiklehrkräfte
+* #physiknachhilfe
+* #physiklehrerwettbewerb
+* #didaktikphysik
+* #physiklehrerzimmer
+* #physikstunde
+* #lieblingsfachphysik
+* #mathephysikedchatde
+* #physikedu
+* #physiklk
+
+
+## 2. Hashtag-based Method
+```{r}
+## Select all complete Hashtags
+
+dat %>% select(hashtags) %>% pull()
+
+dat$has_mathe
+
+
+```
+
+

@@ -1,0 +1,398 @@
+---
+title: "Paper Descriptives Twitter Deutschland"
+author: "Lennart Klein, Conrad Borchers"
+date: "`r format(Sys.time(), '%d. %B, %Y')`"
+output:
+  html_document:
+    toc: true
+    # toc_float: true
+    highlight: "tango"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(kableExtra)
+```
+
+## Load Data
+```{r load data}
+dat <- readRDS("/Volumes/HiWi_Data/DATA/matched_hashtags_data.rds")
+```
+
+## Setup Print Function
+```{r print function}
+summary_kable <- function(x, caption = NULL, col.names = NA) {
+  kable(x,
+    caption = caption,
+    align = "c",
+    digits = 2,
+    col.names = col.names,
+    label = NULL,
+    format.args = list(scientific = FALSE) # prevent scientific notation of numerals
+  ) %>%
+    kable_styling(
+      bootstrap_options = c("striped", "condensed", "responsive"),
+      full_width = TRUE,
+      fixed_thead = TRUE # freeze header to top
+    )
+}
+```
+
+
+## Dataset Summary
+```{r dataset summary}
+dat %>%
+  summarise(
+    N_tweets = n(),
+    N_unique_tweets = n() - sum(is_retweet),
+    N_users = length(unique(user_id)),
+    tweets_per_user = n() / length(unique(user_id)),
+    first_tweet = as.Date(min(created_at)),
+    last_tweet = as.Date(max(created_at)),
+    first_dl = as.Date(min(dl_at)),
+    last_dl = as.Date(max(dl_at)),
+    rt_M = mean(retweet_count, na.rm = TRUE),
+    rt_SD = sd(retweet_count, na.rm = TRUE),
+  ) %>%
+  summary_kable(
+    "Global Dataset Summary",
+    c(
+      "N_tweets",
+      "N Original Tweets",
+      "N_users",
+      "Tweets_per_User",
+      "first_tweet",
+      "last_tweet",
+      "first_dl",
+      "last_dl",
+      "M", "SD"
+    )
+  ) %>%
+  add_header_above(c(" " = 4, "Timeframe" = 2, "Download Times" = 2, "Retweets" = 2))
+```
+
+# New Descriptives
+
+## Nach Fächern
+
+### Report Overlap
+```{r}
+# Ohne Retweets und nur auf Hashtags basierend
+dat %>%
+  filter(!is_retweet) %>%
+  count(fach_checksum) %>%
+  summary_kable(
+    "Fächer Hashtag Communities - Overlap Report",
+    c("In # Fächern", "N Original Tweets")
+  )
+```
+### Fach Coding
+- 21 Fächer (Stand: Nov 2020)
+
+Fach         | Variable
+-------------|---------------
+Biologie     | has_biologie
+Chemie       | has_chemie
+Deutsch      | has_deutsch
+Englisch     | has_englisch
+Erdkunde     | has_erdkunde
+Ethik        | has_ethik
+Franzoesisch | has_franzoesisch
+Geschichte   | has_geschichte
+Informatik   | has_informatik
+Kunst        | has_kunst
+Mathe        | has_mathe
+Musik        | has_musik
+Paedagokik   | has_paedagogik
+Philosophie  | has_philosophie
+Physik       | has_physik
+Politik      | has_politik
+Psychologie  | has_psychologie
+Religion     | has_religion
+Spanisch     | has_spanisch
+Sport        | has_sport
+Wirtschaft   | has_wirtschaft  
+
+
+
+```{r subject helper funtions}
+# Tweet Level Subject counter
+summarise_subjects.tweets <- function(data, category = "") {
+  return(data %>%
+    summarise(
+      category = category,
+      N = n(),
+      Biologie = sum(has_biologie),
+      Chemie = sum(has_chemie),
+      Deutsch = sum(has_deutsch),
+      Englisch = sum(has_englisch),
+      Erdkunde = sum(has_erdkunde),
+      Ethik = sum(has_ethik),
+      Franzoesisch = sum(has_franzoesisch),
+      Geschichte = sum(has_geschichte),
+      Informatik = sum(has_informatik),
+      Kunst = sum(has_kunst),
+      Mathe = sum(has_mathe),
+      Musik = sum(has_musik),
+      Paedagokik = sum(has_paedagogik),
+      Philosophie = sum(has_philosophie),
+      Physik = sum(has_physik),
+      Politik = sum(has_politik),
+      Psychologie = sum(has_psychologie),
+      Religion = sum(has_religion),
+      Spanisch = sum(has_spanisch),
+      Sport = sum(has_sport),
+      Wirtschaft = sum(has_wirtschaft)
+    ))
+}
+
+# User-level aggregation summary function, counter
+summarise_subjects.users <- function(data, category = "") {
+  return(data %>%
+    summarise(
+      category = category,
+      N = length(unique(user_id[fach_checksum > 0])), # TODO: check validity
+      Biologie = length(unique(user_id[has_biologie == 1])),
+      Chemie = length(unique(user_id[has_chemie == 1])),
+      Deutsch = length(unique(user_id[has_deutsch == 1])),
+      Englisch = length(unique(user_id[has_englisch == 1])),
+      Erdkunde = length(unique(user_id[has_erdkunde == 1])),
+      Ethik = length(unique(user_id[has_ethik == 1])),
+      Franzoesisch = length(unique(user_id[has_franzoesisch == 1])),
+      Geschichte = length(unique(user_id[has_geschichte == 1])),
+      Informatik = length(unique(user_id[has_informatik == 1])),
+      Kunst = length(unique(user_id[has_kunst == 1])),
+      Mathe = length(unique(user_id[has_mathe == 1])),
+      Musik = length(unique(user_id[has_musik == 1])),
+      Paedagokik = length(unique(user_id[has_paedagogik == 1])),
+      Philosophie = length(unique(user_id[has_philosophie == 1])),
+      Physik = length(unique(user_id[has_physik == 1])),
+      Politik = length(unique(user_id[has_politik == 1])),
+      Psychologie = length(unique(user_id[has_psychologie == 1])),
+      Religion = length(unique(user_id[has_religion == 1])),
+      Spanisch = length(unique(user_id[has_spanisch == 1])),
+      Sport = length(unique(user_id[has_sport == 1])),
+      Wirtschaft = length(unique(user_id[has_wirtschaft == 1]))
+    ))
+}
+```
+
+```{r}
+# Tweet Level Tweet Level Stats
+# FIXME: kein summarise mehr nötig oder?
+subject_stats.tweets <- function(d, category = "", FUN, var) {
+  return(d %>%
+    summarise(
+      category = category,
+      N = NA,
+      Biologie = FUN(pull(d[d$has_biologie == 1, var])),
+      Chemie = FUN(pull(d[d$has_chemie == 1, var])),
+      Deutsch = FUN(pull(d[d$has_deutsch == 1, var])),
+      Englisch = FUN(pull(d[d$has_englisch == 1, var])),
+      Erdkunde = FUN(pull(d[d$has_erdkunde == 1, var])),
+      Ethik = FUN(pull(d[d$has_ethik == 1, var])),
+      Franzoesisch = FUN(pull(d[d$has_franzoesisch == 1, var])),
+      Geschichte = FUN(pull(d[d$has_geschichte == 1, var])),
+      Informatik = FUN(pull(d[d$has_informatik == 1, var])),
+      Kunst = FUN(pull(d[d$has_kunst == 1, var])),
+      Mathe = FUN(pull(d[d$has_mathe == 1, var])),
+      Musik = FUN(pull(d[d$has_musik == 1, var])),
+      Paedagokik = FUN(pull(d[d$has_paedagogik == 1, var])),
+      Philosophie = FUN(pull(d[d$has_philosophie == 1, var])),
+      Physik = FUN(pull(d[d$has_physik == 1, var])),
+      Politik = FUN(pull(d[d$has_politik == 1, var])),
+      Psychologie = FUN(pull(d[d$has_psychologie == 1, var])),
+      Religion = FUN(pull(d[d$has_religion == 1, var])),
+      Spanisch = FUN(pull(d[d$has_spanisch == 1, var])),
+      Sport = FUN(pull(d[d$has_sport == 1, var])),
+      Wirtschaft = FUN(pull(d[d$has_wirtschaft == 1, var]))
+    ))
+}
+```
+
+```{r}
+# Select only relevant tweets (with bundesland hashtag)
+d <- dat %>% filter(fach_checksum > 0) # save some time in sum calcs
+
+descr <-
+  rbind(
+    d %>%
+      summarise_subjects.users("Users"),
+    # Tweets
+    d %>%
+      filter(!is_retweet) %>% # only original tweets
+      summarise_subjects.tweets("Original Tweets"),
+    # Retweets
+    d %>%
+      filter(is_retweet) %>%
+      summarise_subjects.tweets("Retweets"),
+    # Quotes
+    d %>%
+      filter(is_quote) %>%
+      summarise_subjects.tweets("Quotes"),
+    # Media
+    d %>%
+      filter(!is.na(media_url)) %>%
+      summarise_subjects.tweets("Media"),
+
+    subject_stats.tweets(d, "rt_min", FUN = min, var = "retweet_count"),
+    subject_stats.tweets(d, "rt_q25", FUN = quantile(probs = 0.25), var = "retweet_count"),
+    subject_stats.tweets(d, "rt_q50", FUN = quantile(probs = 0.50), var = "retweet_count"),
+    subject_stats.tweets(d, "rt_q75", FUN = quantile(probs = 0.75), var = "retweet_count"),
+    subject_stats.tweets(d, "rt_max", FUN = max, var = "retweet_count"),
+    subject_stats.tweets(d, "rt_IQR", FUN = IQR, var = "retweet_count"),
+    subject_stats.tweets(d, "rt_M", FUN = mean, var = "retweet_count"),
+    subject_stats.tweets(d, "rt_SD", FUN = sd, var = "retweet_count")
+  )
+
+
+# Fächer in Column
+descr %>%
+  summary_kable() %>%
+  column_spec(1, background = "lightgray", bold = TRUE) %>%
+  column_spec(2, italic = TRUE, border_right = FALSE) %>%
+  add_header_above(c(" " = 2, "Fächer" = 21))
+
+
+# Fächer in Rows
+descr %>%
+  select(-N) %>% # remove rowsum of all states
+  # Transpose Dataframe
+  pivot_longer(-category) %>%
+  pivot_wider(names_from = category, values_from = value) %>%
+  summary_kable() %>%
+  column_spec(1, background = "lightgray", bold = TRUE)
+
+
+# rm(descr, d)
+```                                       
+                                       
+## Comparing classification methods
+### Für Bundesländer
+```{r}
+summarise_matched_states.tweets <- function(data, category = "") {
+  return(data %>%
+    summarise(
+      category = category,
+      N = n(),
+      BW = sum(matched_bw),
+      BY = sum(matched_bayern),
+      BE = sum(matched_berlin),
+      BB = sum(matched_brandenburg),
+      HB = sum(matched_bremen),
+      HH = sum(matched_hamburg),
+      HE = sum(matched_hessen),
+      MV = sum(matched_mv),
+      NI = sum(matched_nds),
+      NW = sum(matched_nrw),
+      RP = sum(matched_rlp),
+      SL = sum(matched_saarland),
+      SN = sum(matched_sachsen),
+      ST = sum(matched_sachsenan),
+      SH = sum(matched_sh),
+      TH = sum(matched_thueringen)
+    ))
+}
+```
+
+#### Calculate tables
+```{r}
+descr <-
+  rbind(
+    # Hashtags only
+    dat %>%
+      summarise_states("Hashtags"),
+    # TODO: change to .tweets
+    # Tweets
+    dat %>%
+      summarise_matched_states.tweets("Simple Keywords")
+  )
+
+
+
+# Fächer in Column
+descr %>%
+  select(-N) %>%
+  summary_kable() %>%
+  column_spec(1, background = "lightgray", bold = TRUE) %>%
+  add_header_above(c(" " = 1, "Bundesländer" = 16))
+
+
+# Fächer in Rows
+descr %>%
+  select(-N) %>% # remove rowsum of all states
+  # Transpose Dataframe
+  pivot_longer(-category) %>%
+  pivot_wider(names_from = category, values_from = value) %>%
+  summary_kable() %>%
+  column_spec(1, background = "lightgray", bold = TRUE)
+```
+
+
+### Für Fächer
+```{r}
+# matched with simple / main keywords
+summarise_matched_subjects.tweets <- function(data, category = "") {
+  return(data %>%
+    summarise(
+      category = category,
+      N = n(), # sum is higher than total
+      Biologie = sum(matched_biologie),
+      Chemie = sum(matched_chemie),
+      Deutsch = sum(matched_deutsch),
+      Englisch = sum(matched_englisch),
+      Erdkunde = sum(matched_erdkunde),
+      Ethik = sum(matched_ethik),
+      Franzoesisch = sum(matched_franzoesisch),
+      Geschichte = sum(matched_geschichte),
+      Informatik = sum(matched_informatik),
+      Kunst = sum(matched_kunst),
+      Mathe = sum(matched_mathe),
+      Musik = sum(matched_musik),
+      Paedagokik = sum(matched_paedagogik),
+      Philosophie = sum(matched_philosophie),
+      Physik = sum(matched_physik),
+      Politik = sum(matched_politik),
+      Psychologie = sum(matched_psychologie),
+      Religion = sum(matched_religion),
+      Spanisch = sum(matched_spanisch),
+      Sport = sum(matched_sport),
+      Wirtschaft = sum(matched_wirtschaft)
+    ))
+}
+```
+
+#### Calculate Tables
+```{r}
+descr <-
+  rbind(
+    # Hashtags only
+    dat %>%
+      summarise_subjects.tweets("Hashtags"),
+    # Tweets
+    dat %>%
+      summarise_matched_subjects.tweets("Simple Keywords")
+  )
+
+
+
+# Fächer in Column
+descr %>%
+  select(-N) %>%
+  summary_kable() %>%
+  column_spec(1, background = "lightgray", bold = TRUE) %>%
+  add_header_above(c(" " = 1, "Fächer" = 21))
+
+
+# Fächer in Rows
+descr %>%
+  select(-N) %>% # remove rowsum of all states
+  # Transpose Dataframe
+  pivot_longer(-category) %>%
+  pivot_wider(names_from = category, values_from = value) %>%
+  summary_kable() %>%
+  column_spec(1, background = "lightgray", bold = TRUE)
+
+# rm(descr)
+```

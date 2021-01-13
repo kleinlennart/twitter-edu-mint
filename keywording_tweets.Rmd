@@ -1,0 +1,81 @@
+---
+title: "Keywording"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(data.table)
+```
+
+## Load Data
+```{r load data}
+dat <- readRDS("/Volumes/HiWi_Data/DATA/coded_hashtags.rds")
+```
+
+
+```{r}
+match.helper <- function(chr_data, pattern) {
+  return(
+    str_detect(
+      chr_data,
+      regex(pattern, ignore_case = TRUE) # makes a huge difference
+    ) %>%
+      as.numeric() # make numeric categorical for checksum (0 / 1)
+  )
+}
+
+## Match Bundesländer
+# TODO: Abkürzungen nutzen
+dat <- dat %>%
+  mutate(
+    matched_bw = match.helper(text_clean, "baden-württemberg|baden-wuerttemberg|bawü"),
+    matched_bayern = match.helper(text_clean, "bayern"),
+    matched_berlin = match.helper(text_clean, "berlin"),
+    matched_brandenburg = match.helper(text_clean, "brandenburg"),
+    matched_bremen = match.helper(text_clean, "bremen"),
+    matched_hamburg = match.helper(text_clean, "hamburg"),
+    matched_hessen = match.helper(text_clean, "hessen"),
+    matched_mv = match.helper(text_clean, "mecklenburg-vorpommern"),
+    matched_nds = match.helper(text_clean, "niedersachsen"),
+    matched_nrw = match.helper(text_clean, "nordrhein-westfalen"),
+    matched_rlp = match.helper(text_clean, "rheinland-pfalz"),
+    matched_saarland = match.helper(text_clean, "saarland"),
+    matched_sachsen = match.helper(text_clean, "sachsen"),
+    matched_sachsenan = match.helper(text_clean, "sachsen-anhalt"),
+    matched_sh = match.helper(text_clean, "schleswig-holstein"),
+    matched_thueringen = match.helper(text_clean, "thüringen|thueringen"),
+  )
+
+# Match Fächer
+dat <- dat %>%
+  mutate(
+    matched_biologie = match.helper(text_clean, "bio|biologie|biology"),
+    matched_chemie = match.helper(text_clean, "chemie|chemistry"),
+    matched_deutsch = match.helper(text_clean, "deutsch"),
+    matched_englisch = match.helper(text_clean, "englisch|english"),
+    matched_erdkunde = match.helper(text_clean, "erdkunde|geographie|geography"),
+    matched_ethik = match.helper(text_clean, "ethik"),
+    matched_franzoesisch = match.helper(text_clean, "französisch|franzoesisch|french"),
+    matched_geschichte = match.helper(text_clean, "geschichte|history"),
+    matched_informatik = match.helper(text_clean, "informatik|CS"), # oft "Info"
+    matched_kunst = match.helper(text_clean, "kunst|art"), # zu grob!!!
+    matched_mathe = match.helper(text_clean, "mathe|math"),
+    matched_musik = match.helper(text_clean, "musik|music"), # zu grob!!!
+    matched_paedagogik = match.helper(text_clean, "päda|pädagogik"),
+    matched_philosophie = match.helper(text_clean, "philo|philosophie|philosophy"),
+    matched_physik = match.helper(text_clean, "physik|physics"),
+    matched_politik = match.helper(text_clean, "politik|sowi|sozialwissenschaften|politics"),
+    matched_psychologie = match.helper(text_clean, "psychologie|psychology"),
+    matched_religion = match.helper(text_clean, "reli|religion"),
+    matched_spanisch = match.helper(text_clean, "spanisch|espanol|spanish"),
+    matched_sport = match.helper(text_clean, "sport|PE"),
+    matched_wirtschaft = match.helper(text_clean, "wirtschaft|VWL|economics") # zu grob!!
+  )
+```
+
+## Save Data
+```{r}
+saveRDS(dat, "/Volumes/HiWi_Data/DATA/matched_hashtags_data.rds")
+```
