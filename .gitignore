@@ -4,6 +4,8 @@ token.txt
 
 
 #### Data ####
+*.log
+*.xlsx
 *.csv
 *.env
 *.rda
