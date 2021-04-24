@@ -1,11 +1,13 @@
+### Low-level sampling methods for dataset ###
+
 library(tidyverse)
 library(kableExtra)
 library(googlesheets4)
 
 dat <- readRDS("../DATA/TWITTER_DEUTSCHLAND_NOV_2020_FINAL.rds")
 
+# 1. User Keywords Method -------------------------------------------------
 
-#### 1. User Keywords Method ####
 teacher_tweets_mathe <- dat %>%
   filter(!is_retweet) %>%
   filter(str_detect(description, regex("mathe|maths", ignore_case = TRUE))) %>%
@@ -27,7 +29,8 @@ teacher_tweets_physik <- dat %>%
 
 teacher_tweets <- bind_rows(teacher_tweets_mathe, teacher_tweets_physik)
 
-#### 2. Subject Hashtags Method ####
+
+# 2. Subject Hashtags Method ----------------------------------------------
 
 ## Change umlaute in Text
 dat <- dat %>%
@@ -44,7 +47,7 @@ hashtags <- read_sheet(
 )
 
 
-#### Physik
+#### Physik ####
 physik_regex <- hashtags %>%
   pull(Physik) %>%
   na.omit() %>%
@@ -60,9 +63,7 @@ physik_hashtags <- dat %>%
   )
 
 
-
-##### Mathe
-
+#### Mathe #####
 mathe_regex <- hashtags %>%
   pull(Mathe) %>%
   na.omit() %>%
@@ -80,18 +81,17 @@ mathe_hashtags <- dat %>%
 hashtag_tweets <- bind_rows(physik_hashtags, mathe_hashtags)
 
 
-###### Alle
+#### All ####
 # all_regex <- paste0(mathe_regex, "|", physik_regex)
 # all_hashtags <- dat %>%
 #   filter(!is_retweet) %>%
 #   filter(str_detect(text_clean, regex(all_regex, ignore_case = TRUE)))
-# 
+#
 # ## Overlap Report:
 # (nrow(mathe_hashtags) + nrow(physik_hashtags)) - nrow(all_hashtags)
 
 
-#### 3. Naive Tweet Keyword Method ####
-
+# 3. Naive Tweet Keyword Method -------------------------------------------
 naive_mathe <- dat %>%
   filter(!is_retweet) %>%
   filter(str_detect(text_clean, regex("mathe|maths", ignore_case = TRUE))) %>%
@@ -110,13 +110,8 @@ naive_physik <- dat %>%
 
 naive_tweets <- bind_rows(naive_mathe, naive_physik)
 
-#### + Summary ####
-basic_methods <- bind_rows(teacher_tweets, hashtag_tweets, naive_tweets) 
+
+# Export ------------------------------------------------------------------
+basic_methods <- bind_rows(teacher_tweets, hashtag_tweets, naive_tweets)
 
 saveRDS(basic_methods, "../OUTPUTS/basic_methods.rds")
-
-
-
-
-
-  

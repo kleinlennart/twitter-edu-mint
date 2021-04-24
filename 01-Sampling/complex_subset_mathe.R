@@ -1,3 +1,5 @@
+### More complex sampling methods for Math Tweets ###
+
 library(tidyverse)
 library(kableExtra)
 library(googlesheets4)
@@ -44,8 +46,8 @@ mathe_list <- mathe_list %>%
   str_replace_all("ö", "oe") %>%
   str_replace_all("ü", "ue") %>%
   str_replace_all("ß", "ss")
-  # regex beide Schreibweisen (mit Bindestrich oder ohne)
-  # str_replace_all("-", "[ -]")
+# regex beide Schreibweisen (mit Bindestrich oder ohne)
+# str_replace_all("-", "[ -]")
 
 mathe_keywords <- data.frame(keyword = mathe_list)
 
@@ -75,7 +77,7 @@ for (keyword in mathe_list) {
 rm(keyword)
 
 # Add Search descriptives
-results <- results %>% 
+results <- results %>%
   mutate(
     subject = "Mathe",
     method = "Keywords"
@@ -92,5 +94,3 @@ saveRDS(results, "../OUTPUTS/mathe_results_all2.rds")
 #   mathe_keywords, "https://docs.google.com/spreadsheets/d/14DjH2wdz33SQHIJZVcq03IvxNdU-g89LnSbpO_uQgD8/edit#gid=1344669147",
 #   ""
 # )
-
-
