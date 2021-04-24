@@ -12,5 +12,5 @@ dat <- dat %>% add_reply_variables()
 # test reply structure
 dat %>%
   filter(conversation_id == "1124678870609866757") %>%
-  view_replies() %>%
+  select(status_id, text) %>% 
   View()
