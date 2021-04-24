@@ -1,7 +1,8 @@
-### Read in and check codings of maths physics tweets ###
+### Read in and check codings of maths and physics tweets ###
 
 library(tidyverse)
 
+# FIXME: file paths have changed
 
 ### Mathe ---------------------------------------------------------------
 # Uncoded, clean data
