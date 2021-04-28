@@ -61,15 +61,17 @@ parse_response <- function(response) {
 
 # Parsing method compatible with our existing data cleaning methods
 parse_json_response <- function(response) {
-  parsed <- httr::content(response, as = "text") %>%
-    # flatten did not work properly, maybe do as one step with recursive = TRUE
-     jsonlite::fromJSON(simplifyDataFrame = TRUE, flatten = TRUE)
+  parsed <- httr::content(response, as = "text") 
+  # %>%
+  #   # FIXME: flatten did not work properly, maybe do as one step with recursive = TRUE
+  #    jsonlite::fromJSON(simplifyDataFrame = TRUE, flatten = TRUE)
   return(parsed)
 }
 
 ### Test ------------------------------------------------------------
 id <- "862204655316742145"
-dat <- get_tweet_lookup(id) %>% parse_response()
+dat <- list()
+dat[[1]] <- get_tweet_lookup(id) %>% parse_json_response()
 
 ### Loop trough ids ------------------------------------------------------
 log_file <- file(paste0("logs/download_", Sys.Date(), ".log"), open = "a")
